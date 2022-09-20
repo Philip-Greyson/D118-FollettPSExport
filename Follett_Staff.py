@@ -1,14 +1,22 @@
 # importing module
-import oracledb
+import oracledb  # needed to connect to PowerSchool database (oracle database)
 import sys
-import os
+import os  # needed to get environment variables for username/passwords
+import pysftp  # needed to connect to sftp
 
 un = 'PSNavigator' #PSNavigator is read only, PS is read/write
 pw = os.environ.get('POWERSCHOOL_DB_PASSWORD') #the password for the PSNavigator account
 cs = os.environ.get('POWERSCHOOL_PROD_DB') #the IP address, port, and database name to connect to
 
+#set up sftp login info, stored as environment variables on system
+sftpUN = os.environ.get('FOLLETT_SFTP_USERNAME')
+sftpPW = os.environ.get('FOLLETT_SFTP_PASSWORD')
+sftpHOST = os.environ.get('FOLLETT_SFTP_ADDRESS')
+cnopts = pysftp.CnOpts(knownhosts='known_hosts') #connection options to use the known_hosts file for key validation
+
 print("Username: " + str(un) + " |Password: " + str(pw) + " |Server: " + str(cs)) #debug so we can see where oracle is trying to connect to/with
-badnames = ['USE', 'Training1','Trianing2','Trianing3','Trianing4','Planning','Admin','ADMIN','NURSE','USER', 'USE ', 'PAYROLL', 'Human', "BENEFITS"]
+print("SFTP Username: " + str(sftpUN) + " |SFTP Password: " + str(sftpPW) + " |SFTP Server: " + str(sftpHOST)) #debug so we can see what sftp info is being used
+badnames = ['USE', 'Training1','Trianing2','Trianing3','Trianing4','Planning','Admin','ADMIN','NURSE','USER', 'USE ', 'PAYROLL', 'Human', "BENEFITS", 'TEST', 'TESTTT', 'TESTTEST', 'STUDENT']
 
 with oracledb.connect(user=un, password=pw, dsn=cs) as con:#  create the connecton to the database
     with con.cursor() as cur:  # start an entry cursor
@@ -70,3 +78,16 @@ with oracledb.connect(user=un, password=pw, dsn=cs) as con:#  create the connect
             except Exception as er:
                 print('Unknown Error: '+str(er))
                 print('Unknown Error: '+str(er), file=outputLog)
+
+with pysftp.Connection(sftpHOST, username=sftpUN, password=sftpPW, cnopts=cnopts) as sftp:
+    print('SFTP connection established on ' + sftpHOST)
+    print('SFTP connection established on' + sftpHOST, file=outputLog)
+    # print(sftp.pwd) # debug, show what folder we connected to
+    # print(sftp.listdir())  # debug, show what other files/folders are in the current directory
+    sftp.chdir('./patrons')  # change to the extensionfields folder
+    # print(sftp.pwd) # debug, make sure out changedir worked
+    # print(sftp.listdir())
+    sftp.put('Follett_Staff.csv')  # upload the file onto the sftp server
+    print("Staff file placed on remote server")
+    print("Staff file placed on remote server", file=outputLog)
+outputLog.close()
