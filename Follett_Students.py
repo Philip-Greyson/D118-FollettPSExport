@@ -1,14 +1,22 @@
 # importing module
-import oracledb
+import oracledb # needed to connect to PowerSchool database (oracle database)
 import sys
-import os
+import os # needed to get environment variables for username/passwords
+import pysftp # needed to connect to sftp 
 
 un = 'PSNavigator' #PSNavigator is read only, PS is read/write
 pw = os.environ.get('POWERSCHOOL_DB_PASSWORD') #the password for the PSNavigator account
 cs = os.environ.get('POWERSCHOOL_PROD_DB') #the IP address, port, and database name to connect to
 
+#set up sftp login info, stored as environment variables on system
+sftpUN = os.environ.get('FOLLETT_SFTP_USERNAME')
+sftpPW = os.environ.get('FOLLETT_SFTP_PASSWORD')
+sftpHOST = os.environ.get('FOLLETT_SFTP_ADDRESS')
+cnopts = pysftp.CnOpts(knownhosts='known_hosts') #connection options to use the known_hosts file for key validation
+
 print("Username: " + str(un) + " |Password: " + str(pw) + " |Server: " + str(cs)) #debug so we can see where oracle is trying to connect to/with
-badnames = ['USE', 'Training1','Trianing2','Trianing3','Trianing4','Planning','Admin','ADMIN','NURSE','USER', 'USE ', 'PAYROLL', 'Human', "BENEFITS", 'TEST']
+print("SFTP Username: " + str(sftpUN) + " |SFTP Password: " + str(sftpPW) + " |SFTP Server: " + str(sftpHOST)) #debug so we can see what sftp info is being used
+badnames = ['USE', 'Training1','Trianing2','Trianing3','Trianing4','Planning','Admin','ADMIN','NURSE','USER', 'USE ', 'PAYROLL', 'Human', "BENEFITS", 'TEST', 'TESTTT', 'TESTTEST', 'STUDENT']
 
 # create the connecton to the database
 with oracledb.connect(user=un, password=pw, dsn=cs) as con:
@@ -17,7 +25,7 @@ with oracledb.connect(user=un, password=pw, dsn=cs) as con:
             print("Connection established: " + con.version)
             try:
                 outputLog = open('student_log.txt', 'w') #open a second file for the log output
-                cur.execute('SELECT student_number, last_name, first_name, middle_name, sched_YearOfGraduation, dob, gender, home_room, grade_level, home_phone, schoolid, enroll_status, mailing_street, mailing_city, mailing_state, mailing_zip, dcid FROM students ORDER BY student_number')
+                cur.execute('SELECT student_number, first_name, last_name, middle_name, sched_YearOfGraduation, dob, gender, home_room, grade_level, home_phone, schoolid, enroll_status, mailing_street, mailing_city, mailing_state, mailing_zip, dcid FROM students ORDER BY student_number')
                 rows = cur.fetchall()  # store the data from the query into the rows variable
 
                 # print('ID,Last,First,Middle,GradYear,Birthday,Gender,Homeroom,Grade,HomePhone,SchoolID,EnrollStatus,Street,City,State,Zipcode,GuardianEmail,StudentEmail,PatronType', file=outputfile)
@@ -34,7 +42,7 @@ with oracledb.connect(user=un, password=pw, dsn=cs) as con:
                             firstName = str(entry[1])
                             lastName = str(entry[2])
                             middleName = str(entry[3]) if entry[3] != None else ""
-                            gradYear = str(entry[4])
+                            gradYear = str(entry[4]) if str(entry[4]) != '0' else ""
                             birthday = entry[5].strftime("%Y-%m-%d") if entry[5] != None else ""
                             gender = str(entry[6])
                             homeroom = str(entry[7]) if entry[7] != None else ""
@@ -83,3 +91,16 @@ with oracledb.connect(user=un, password=pw, dsn=cs) as con:
             except Exception as er:
                 print('Unknown Error: '+str(er))
                 print('Unknown Error: '+str(er), file=outputLog)
+
+with pysftp.Connection(sftpHOST, username=sftpUN, password=sftpPW, cnopts=cnopts) as sftp:
+    print('SFTP connection established on ' + sftpHOST)
+    print('SFTP connection established on' + sftpHOST, file=outputLog)
+    # print(sftp.pwd) # debug, show what folder we connected to
+    # print(sftp.listdir())  # debug, show what other files/folders are in the current directory
+    sftp.chdir('./patrons')  # change to the extensionfields folder
+    # print(sftp.pwd) # debug, make sure out changedir worked
+    # print(sftp.listdir())
+    sftp.put('Follett_Patrons.csv')  # upload the file onto the sftp server
+    print("Patrons file placed on remote server")
+    print("Patrons file placed on remote server", file=outputLog)
+outputLog.close()
