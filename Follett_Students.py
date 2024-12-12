@@ -17,7 +17,7 @@ cnopts = pysftp.CnOpts(knownhosts='known_hosts') #connection options to use the 
 print(f'Username: {un} | Password: {pw} | Server: {cs}') # debug so we can see where oracle is trying to connect to/with
 print(f'SFTP Username: {sftpUN} | SFTP Password: {sftpPW} | SFTP Server: {sftpHOST}') # debug so we can see what sftp info is being used
 badnames = ['USE', 'Training1','Trianing2','Trianing3','Trianing4','Planning','Admin','ADMIN','NURSE','USER', 'USE ', 'PAYROLL', 'Human', "BENEFITS", 'TEST', 'TESTTT', 'TESTTEST', 'STUDENT']
-badschools = ['0', '131', '132', '133', '134', '135', '136', '13', '161', '183', '205', '300', '901', '266']
+badschools = ['0', '131', '132', '133', '134', '135', '136', '13', '161', '183', '205', '300', '901', '266', '206']
 
 def find_courses(studentNum: int, studentID: int, schoolCode: int, courseType: str) -> str:
     """ Find courses in the current term for a student."""
@@ -57,13 +57,13 @@ def find_courses(studentNum: int, studentID: int, schoolCode: int, courseType: s
 
                 # next process the teacher information from the course to get the string we will output
                 if validCourse:
-                    print(validCourse)
+                    # print(validCourse)
                     teacherID = int(validCourse[1])
                     periodExpression = str(validCourse[2])
                     cur.execute('SELECT users.first_name, users.last_name FROM schoolstaff LEFT JOIN users on schoolstaff.users_dcid = users.dcid WHERE schoolstaff.id = :schoolstaff', schoolstaff = teacherID)
                     teacher = cur.fetchall()
                     teacherInfo = f'{teacher[0][1]}, {teacher[0][0]} - {periodExpression}'
-                    print(teacherInfo)
+                    # print(teacherInfo)
                     return teacherInfo
                 else:  # if they dont have a course that matches the course type
                     print(f'WARN: Student {studentNum} does not have a {courseType} course, returning a blank')
