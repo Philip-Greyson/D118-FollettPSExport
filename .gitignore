@@ -3,4 +3,5 @@ staff_log.txt
 student_log.txt
 known_hosts
 *.csv
+*.properties
 ruff.toml
