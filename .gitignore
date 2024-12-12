@@ -1,7 +1,6 @@
 Follett_Staff.csv
 staff_log.txt
 student_log.txt
-Follett_Patrons.csv
 known_hosts
-Follett_Middle_Patrons.csv
+*.csv
 ruff.toml
