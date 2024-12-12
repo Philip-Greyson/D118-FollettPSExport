@@ -1,6 +1,5 @@
 # importing module
 import oracledb # needed to connect to PowerSchool database (oracle database)
-import sys # needed for non-scrolling text display
 import os # needed to get environment variables for username/passwords
 import pysftp # needed to connect to sftp 
 from datetime import datetime, timedelta
@@ -31,7 +30,7 @@ def find_courses(studentNum: int, studentID: int, schoolCode: int, courseType: s
         # compare todays date to the start and end dates of the term, with 1 day leeway before the start so it will populate a day before the start of the year
         if (termStart - timedelta(days=1) < today) and (termEnd > today):
             termID = str(term[0])
-            termDCID = str(term[1])
+            # termDCID = str(term[1])  # used for debug
             # print(f'DBUG: Found good term: {termID} | {termDCID}')
             # print(f'DBUG: Found good term: {termID} | {termDCID}', file=log)
             # find the actual courses for the good term
